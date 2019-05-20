@@ -155,7 +155,9 @@ func (codec TypeLengthValueCodec) Decode(raw net.Conn) (Message, error) {
 
 	go func(bc chan []byte, ec chan error) {
 		typeData := make([]byte, MessageTypeBytes)
-		_, err := io.ReadFull(raw, typeData)
+		_, err := io.ReadFull(raw, typeData) // io.ReadFull 一直阻塞到有数据, 这里没有设置超时时间
+		// 超时设置参照 https://cloud.tencent.com/developer/ask/180719
+		// 外层如何中断这个阻塞, cancel调Decode()函数:  Close这个连接, read返回err
 		if err != nil {
 			ec <- err
 			close(bc)

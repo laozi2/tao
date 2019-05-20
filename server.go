@@ -206,7 +206,7 @@ func (s *Server) Conn(id int64) (*ServerConn, bool) {
 // go-routine for each. The service go-routines read messages and then call
 // the registered handlers to handle them. Start returns when failed with fatal
 // errors, the listener willl be closed when returned.
-func (s *Server) Start(l net.Listener) error {
+func (s *Server) Start(l net.Listener) error { //NOTE: Listener 是接口, 不是 TCPListener
 	s.mu.Lock()
 	if s.lis == nil {
 		s.mu.Unlock()
@@ -232,9 +232,10 @@ func (s *Server) Start(l net.Listener) error {
 
 	var tempDelay time.Duration
 	for {
-		rawConn, err := l.Accept()
+		rawConn, err := l.Accept() // NOTE: 一直阻塞， Accept()返回的是实例的接口, AcceptTCP()返回的实例的指针
+		// Listener 没有SetDeadline()函数, 也没有必要设置截止时间 注意: 不是超时时间)
 		if err != nil {
-			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+			if ne, ok := err.(net.Error); ok && ne.Temporary() { //阻塞的情况下仍然返回临时不可用， 这个时候可以延迟一段时间再试
 				if tempDelay == 0 {
 					tempDelay = 5 * time.Millisecond
 				} else {
@@ -244,7 +245,7 @@ func (s *Server) Start(l net.Listener) error {
 					tempDelay = max
 				}
 				holmes.Errorf("accept error %v, retrying in %d\n", err, tempDelay)
-				select {
+				select { // 之所以不用Sleep(), 是需要支持别的事件,如退出
 				case <-time.After(tempDelay):
 				case <-s.ctx.Done():
 				}

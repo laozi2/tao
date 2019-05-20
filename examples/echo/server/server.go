@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/laozi2/tao"
+	"github.com/laozi2/tao/examples/echo"
 	"github.com/leesper/holmes"
-	"github.com/leesper/tao"
-	"github.com/leesper/tao/examples/echo"
 )
 
 // EchoServer represents the echo server.
